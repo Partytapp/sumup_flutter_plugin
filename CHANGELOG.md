@@ -1,3 +1,8 @@
+## 0.15.1
+
+* Android Tap-to-Pay: preserve transaction identifiers from `TransactionCanceled` and
+  `TransactionResultUnknown` events so clients can reconcile transactions that already exist.
+
 ## 0.15.0
 
 * Upgrade native SDKs: Android Reader `7.1.0`, Android Tap-to-Pay `1.1.5`, and iOS `7.1.2`.
