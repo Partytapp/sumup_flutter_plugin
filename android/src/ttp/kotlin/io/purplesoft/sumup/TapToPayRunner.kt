@@ -9,6 +9,7 @@ import com.sumup.taptopay.auth.AuthTokenProvider
 import com.sumup.taptopay.payment.domain.model.api.AffiliateModel
 import com.sumup.taptopay.payment.domain.model.api.CheckoutData
 import com.sumup.taptopay.payment.domain.model.api.PaymentEvent
+import com.sumup.taptopay.payment.domain.model.api.PaymentOutput
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.runBlocking
@@ -233,6 +234,13 @@ internal object TapToPayRunner {
      * (CardRequested, CardPresented, CVMRequested, CVMPresented, PaymentFlowClosedSuccessfully)
      * which should not terminate the payment result.
      */
+    private fun paymentOutputToResult(paymentOutput: PaymentOutput?): Map<String, Any?> = paymentOutput?.let { output ->
+        mapOf(
+            "transactionCode" to output.txCode,
+            "foreignTransactionId" to output.serverTransactionId
+        )
+    } ?: emptyMap()
+
     private fun paymentEventToResult(event: PaymentEvent): Map<String, Any?>? = when (event) {
         is PaymentEvent.TransactionDone -> {
             val o = event.paymentOutput
@@ -251,18 +259,13 @@ internal object TapToPayRunner {
                 ?: event.tapToPayException?.javaClass?.simpleName
                 ?: "Transaction failed"
             Log.e(TAG, "Tap-to-Pay transaction failed: $errStr")
-            val base = event.paymentOutput?.let { o ->
-                mapOf(
-                    "transactionCode" to o.txCode,
-                    "foreignTransactionId" to o.serverTransactionId
-                ).filterValues { it != null }
-            } ?: emptyMap()
+            val base = paymentOutputToResult(event.paymentOutput)
             base + mapOf("success" to false, "errors" to formatTapToPayError(errStr), "rawError" to errStr)
         }
         is PaymentEvent.TransactionCanceled ->
-            mapOf("success" to false, "errors" to "Transaction canceled")
+            paymentOutputToResult(event.paymentOutput) + mapOf("success" to false, "errors" to "Transaction canceled")
         is PaymentEvent.TransactionResultUnknown ->
-            mapOf("success" to false, "errors" to "Transaction result unknown")
+            paymentOutputToResult(event.paymentOutput) + mapOf("success" to false, "errors" to "Transaction result unknown")
         // PaymentFlowClosedSuccessfully fires after the success screen is dismissed.
         // TransactionDone already delivered the result, so return null to avoid a double call.
         // All other events (CardRequested, CardPresented, CVMRequested, CVMPresented) are

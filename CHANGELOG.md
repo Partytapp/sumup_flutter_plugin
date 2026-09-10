@@ -7,6 +7,8 @@
   deprecation warning ("plugins that apply Kotlin Gradle Plugin (KGP): sumup") for consuming apps.
   The example app's `app/build.gradle` was likewise migrated (removed `org.jetbrains.kotlin.android`).
   Minimum Flutter 3.44 / Dart 3.12 (already required) is unchanged.
+* Android Tap-to-Pay: preserve transaction identifiers from `TransactionCanceled` and
+  `TransactionResultUnknown` events so clients can reconcile transactions that already exist.
 
 ## 0.15.0
 

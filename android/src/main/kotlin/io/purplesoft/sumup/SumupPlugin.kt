@@ -331,7 +331,7 @@ class SumupPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, PluginRegis
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
         Log.d(tag, "Sumup plugin: activity result. RequestCode: $requestCode, ResultCode: $resultCode")
-        val resultCodes = intArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+        val resultCodes = 0..15
 
         if (resultCode !in resultCodes) return false
 
@@ -368,6 +368,12 @@ class SumupPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, PluginRegis
                     currentOp.response.message = mutableMapOf(
                             "responseCode" to resultCodeInt,
                             "responseMessage" to resultMessage,
+                            "errors" to when (resultCodeInt) {
+                                0 -> "payment_canceled"
+                                15 -> "payment_result_unknown"
+                                else -> resultMessage
+                            },
+                            "transactionCode" to txCode,
                             "txCode" to txCode,
                             "receiptSent" to receiptSent,
                             "requestCode" to requestCode,
@@ -396,6 +402,15 @@ class SumupPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, PluginRegis
             currentOp.flutterResult()
         } else if (SumUpTask.valueOf(requestCode) == SumUpTask.TOKEN_LOGIN) {
             currentOp.response.message = mutableMapOf("responseCode" to resultCode, "requestCode" to requestCode)
+            currentOp.response.status = false
+            currentOp.flutterResult()
+        } else if (SumUpTask.valueOf(requestCode) == SumUpTask.CHECKOUT) {
+            currentOp.response.message = mutableMapOf(
+                    "responseCode" to resultCode,
+                    "errors" to if (resultCode == 0) "payment_canceled" else "payment_result_unknown",
+                    "requestCode" to requestCode,
+                    "success" to false
+                    )
             currentOp.response.status = false
             currentOp.flutterResult()
         } else {

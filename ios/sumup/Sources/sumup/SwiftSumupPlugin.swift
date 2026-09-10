@@ -142,7 +142,11 @@ public class SwiftSumupPlugin: NSObject, FlutterPlugin {
             { (checkoutResult: CheckoutResult?, error: Error?) in
                 let resultCheckout = checkoutResult ?? CheckoutResult()
                 if resultCheckout.transactionCode == nil {
-                    pluginResponse.message = ["success": false, "errors": error?.localizedDescription ?? "Checkout did not complete"]
+                    pluginResponse.message = [
+                        "success": false,
+                        "errors": error == nil ? "payment_canceled" : "payment_result_unknown",
+                        "responseMessage": error?.localizedDescription ?? "Checkout did not complete"
+                    ]
                     result(pluginResponse.toDictionary())
                     return
                 }
